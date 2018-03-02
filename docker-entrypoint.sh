@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 
+# Confirm TZ setting from ENV params
+if [[ ! -z "$TZ" ]] ; then
+    echo Timezone: $TZ
+    date
+fi
+
 # Update config file from ENV params
 if [[ ! -f /config/dupReport.rc ]] ; then
     cp /python/dupreport/default_config/dupReport.rc /config/dupReport.rc
@@ -34,5 +40,27 @@ updateConfig 'outpassword' "$OUT_PASSWORD"
 updateConfig 'outsender' "$OUT_SENDER"
 updateConfig 'outreceiver' "$OUT_RECEIVER"
 
-# Actual entry
-exec "$@"
+# Launch the script, a cron job for the script, or the provided command
+if [[ "$#" -eq 0 ]] ; then
+
+    if [[ ! -z "$REPORT_TIME" ]] ; then
+
+        cat > /config/crontab <<EOCRON
+$(expr substr $REPORT_TIME 4 2) $(expr substr $REPORT_TIME 1 2) * * * python3 /python/dupreport/dupReport.py -r /config -d /config -l /config 
+
+EOCRON
+        (crontab -l ; cat /config/crontab) | crontab -
+# Note: cannot directly exec crond -f here, due to dcron calling setpgid which is disallowed in docker containers for PID 1
+        crond -f
+
+    else
+
+        exec python3 /python/dupreport/dupReport.py -r /config -d /config -l /config
+
+    fi
+
+else
+
+    exec "$@"
+
+fi
