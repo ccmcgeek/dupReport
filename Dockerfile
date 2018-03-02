@@ -1,22 +1,30 @@
 FROM alpine:3.7
 
-ENV DUPREPORT_CONFIG_DIR=/config
-
 # Install python3
 RUN apk add --no-cache python3 && \
-# Create user
-    mkdir -p /usr/src/dupreport && \
+# Create workdir
+    mkdir -p /python/dupreport && \
+# Create unprivileged user
     addgroup -g 1000 dupreport && \
-    adduser -D -u 1000 -G dupreport -h /usr/src/dupreport dupreport && \
-    chown -Rh dupreport:dupreport /usr/src/dupreport && \
+    adduser -D -u 1000 -G dupreport -h /python/dupreport dupreport && \
+    chown -Rh dupreport:dupreport /python/dupreport && \
 # Create config location
-    mkdir -p $DUPREPORT_CONFIG_DIR
+    mkdir -p /config && \
+    chown -Rh dupreport:dupreport /config
 
-COPY . /usr/src/dupreport/
+COPY . /python/dupreport/
+COPY docker-entrypoint.sh /usr/local/bin/
 
-WORKDIR /usr/src/dupreport
+WORKDIR /python/dupreport
+USER dupreport
 
+# Create initial RC file
+RUN mkdir /python/dupreport/default_config && \
+    python3 -B /python/dupreport/dupReport.py -r /python/dupreport/default_config -d /python/dupreport/default_config -l /python/dupreport/default_config
+
+# Declare the /config mount
 VOLUME /config
 
 # Entrypoint
-CMD ["python3", "-B", "/usr/src/dupreport/dupReport.py", "-r", "/config", "-d", "/config", "-l", "/config"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD python3 /python/dupreport/dupReport.py -r /config -d /config -l /config
