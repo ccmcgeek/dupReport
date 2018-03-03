@@ -39,6 +39,9 @@ updateConfig 'outaccount' "$OUT_ACCOUNT"
 updateConfig 'outpassword' "$OUT_PASSWORD"
 updateConfig 'outsender' "$OUT_SENDER"
 updateConfig 'outreceiver' "$OUT_RECEIVER"
+updateConfig 'style' "$REPORT_STYLE"
+updateConfig 'sortby' "$REPORT_SORTBY"
+updateConfig 'sizedisplay' "$REPORT_SIZEDISPLAY"
 
 # Launch the script, a cron job for the script, or the provided command
 if [[ "$#" -eq 0 ]] ; then
