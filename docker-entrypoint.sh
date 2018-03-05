@@ -52,6 +52,7 @@ if [[ "$#" -eq 0 ]] ; then
 $(expr substr $REPORT_TIME 4 2) $(expr substr $REPORT_TIME 1 2) * * * python3 /python/dupreport/dupReport.py -r /config -d /config -l /config 
 
 EOCRON
+        crontab -l | sed '/python3.*dupReport\.py/d; /^\s*$/d' | crontab -
         (crontab -l ; cat /config/crontab) | crontab -
 # Note: cannot directly exec crond -f here, due to dcron calling setpgid which is disallowed in docker containers for PID 1
         crond -f
