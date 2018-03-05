@@ -1,6 +1,15 @@
 #!/bin/sh
 set -e
 
+# Setup signal handlers for crond -f case
+handle_sigterm() {
+    if [[ ! -z "$CROND_PID" ]] ; then
+        kill -SIGTERM "$CROND_PID"
+        wait "$CROND_PID"
+    fi
+}
+trap 'handle_sigterm' SIGTERM
+
 # Confirm TZ setting from ENV params
 if [[ ! -z "$TZ" ]] ; then
     echo Timezone: $TZ
@@ -55,7 +64,9 @@ EOCRON
         crontab -l | sed '/python3.*dupReport\.py/d; /^\s*$/d' | crontab -
         (crontab -l ; cat /config/crontab) | crontab -
 # Note: cannot directly exec crond -f here, due to dcron calling setpgid which is disallowed in docker containers for PID 1
-        crond -f
+        crond -f &
+        CROND_PID="$!"
+        wait "$CROND_PID"
 
     else
 
